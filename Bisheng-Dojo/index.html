@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幣勝道場 ｜ 凡人的鏈上飛升錄 (雲端版)</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- 引入 Firebase Compat 函式庫 (適合單檔使用) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=JetBrains+Mono:wght@400;700&display=swap');
+    
+    body {
+      background-color: #050505; 
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', 'Noto Serif TC', monospace, serif;
+      overflow-x: hidden;
+    }
+    .xian-title { font-family: 'Noto Serif TC', serif; }
+    
+    .glow-orange { box-shadow: 0 0 25px rgba(255, 107, 0, 0.2); }
+    .glow-purple { box-shadow: 0 0 25px rgba(59, 7, 100, 0.4); }
+    .glow-red { box-shadow: 0 0 25px rgba(239, 68, 68, 0.2); }
+    
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+    #chi-canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    .shake-anim { animation: shake 0.35s ease-in-out; }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    .bg-tech-purple { background-color: #130f24; }
+    .border-tech-purple { border-color: #3b0764; }
+    .text-tech-orange { color: #ff6b00; }
+    .bg-tech-orange { background-color: #ff6b00; }
+    .text-tech-yellow { color: #ffb400; }
+  </style>
+</head>
+<body class="relative min-h-screen selection:bg-orange-500 selection:text-black">
+
+  <canvas id="chi-canvas"></canvas>
+
+  <!-- ================= Gmail 登入山門 (遮罩) ================= -->
+  <div id="login-overlay" class="fixed inset-0 z-50 bg-[#050505]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+    <div class="bg-[#120f1d] border border-orange-500/50 rounded-2xl p-8 max-w-md w-full text-center glow-orange relative overflow-hidden shadow-[0_0_40px_rgba(255,107,0,0.3)]">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-tech-orange/20 blur-[40px] rounded-full pointer-events-none"></div>
+      
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-950 to-orange-950 border border-orange-500/40 mx-auto flex items-center justify-center glow-orange mb-6">
+        <i data-lucide="shield" class="w-8 h-8 text-tech-orange"></i>
+      </div>
+      
+      <h2 class="xian-title text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-orange-500 to-purple-400 mb-2">
+        幣勝道場 ‧ 登入山門
+      </h2>
+      <p class="text-gray-400 text-sm mb-8">授權 Gmail 綁定身分，開啟你的雲端修仙之路</p>
+      
+      <button id="login-btn" class="w-full py-4 rounded-xl bg-white hover:bg-gray-200 text-black font-black text-sm flex items-center justify-center gap-3 transition transform hover:-translate-y-0.5 shadow-lg">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5">
+        使用 Google 帳號登入
+      </button>
+      
+      <p class="text-[10px] text-gray-600 mt-6">首次登入將自動建立專屬雲端道基檔案</p>
+    </div>
+  </div>
+
+  <div class="relative z-10 flex flex-col min-h-screen hidden" id="main-app">
+    
+    <!-- 頂部 HUD -->
+    <header class="border-b border-purple-900/60 bg-[#050505]/90 backdrop-blur-md sticky top-0 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+        
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-950 to-orange-950 border border-orange-500/40 flex items-center justify-center glow-orange relative overflow-hidden">
+            <div class="absolute inset-0 bg-orange-500/20 blur-md"></div>
+            <i data-lucide="shield" class="w-6 h-6 text-tech-orange relative z-10"></i>
+          </div>
+          <div>
+            <h1 class="xian-title text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-orange-500 to-purple-400 drop-shadow-sm">
+              幣勝道場 ‧ 鏈上飛升錄
+            </h1>
+            <p class="text-[10px] text-purple-400 tracking-wider font-bold opacity-80">幣勝防詐社區 ｜ 專注風控與學習反思</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 bg-[#0d0a17] border border-purple-800/60 rounded-2xl px-2 py-1.5 text-xs shadow-inner">
+          <button onclick="changeDaoName()" class="group flex items-center gap-2 text-gray-200 hover:text-tech-orange hover:bg-purple-900/40 px-2 py-1.5 rounded-xl transition duration-300" title="點擊修改道號">
+            <div class="w-6 h-6 rounded-full bg-purple-950 border border-purple-700 flex items-center justify-center group-hover:border-tech-orange transition">
+              <i data-lucide="user" class="w-3.5 h-3.5 text-tech-orange"></i>
+            </div>
+            <span id="hud-name" class="font-bold text-[13px] tracking-wide">載入中...</span>
+            <i data-lucide="edit-3" class="w-3 h-3 text-gray-600 group-hover:text-tech-orange transition"></i>
+          </button>
+          
+          <span class="text-purple-900/60">|</span>
+          
+          <div class="flex items-center gap-2 px-1" title="當前修為進度">
+            <span id="hud-realm" class="px-2 py-1 rounded-md bg-purple-950 border border-purple-600/40 text-tech-yellow font-bold text-[11px] tracking-wider shadow-sm">
+              載入中
+            </span>
+            <div class="flex flex-col justify-center gap-1 w-24">
+              <div class="flex justify-between items-center px-0.5 text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                <span>Exp</span>
+                <span id="hud-exp-text" class="text-tech-yellow">0/100</span>
+              </div>
+              <div class="h-1.5 bg-gray-900 rounded-full overflow-hidden shadow-inner">
+                <div id="hud-exp-bar" class="h-full bg-gradient-to-r from-orange-600 to-yellow-400 transition-all duration-700 relative" style="width: 0%">
+                  <div class="absolute right-0 top-0 bottom-0 w-2 bg-white/40 blur-[1px]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <span class="text-purple-900/60">|</span>
+          
+          <div class="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1.5 rounded-xl text-tech-yellow font-bold" title="當前累積靈石">
+            <i data-lucide="gem" class="w-3.5 h-3.5 text-yellow-400"></i>
+            <span id="hud-stones" class="text-[13px]">0</span>
+          </div>
+
+          <span class="text-purple-900/60">|</span>
+
+          <!-- 登出按鈕 -->
+          <button onclick="logout()" class="px-2 py-1.5 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-900/20 transition" title="登出山門">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 導航選單 -->
+      <nav class="max-w-6xl mx-auto px-4 flex overflow-x-auto space-x-1 border-t border-purple-900/40 pt-2 text-xs scrollbar-hide">
+        <button onclick="switchTab('path')" id="tab-path" class="tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-orange-500 bg-orange-500/10 text-tech-orange font-bold whitespace-nowrap flex items-center gap-2 transition-all">
+          <i data-lucide="map" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> 九大飛升境界
+        </button>
+        <button onclick="switchTab('shrine')" id="tab-shrine" class="tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-transparent text-gray-400 hover:text-tech-orange hover:bg-purple-900/20 whitespace-nowrap flex items-center gap-2 transition-all">
+          <i data-lucide="compass" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> 測道骨 (流派鑑定)
+        </button>
+        <button onclick="switchTab('sects')" id="tab-sects" class="tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-transparent text-gray-400 hover:text-tech-orange hover:bg-purple-900/20 whitespace-nowrap flex items-center gap-2 transition-all">
+          <i data-lucide="swords" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> 六大流派殿堂
+        </button>
+        <button onclick="switchTab('scripture')" id="tab-scripture" class="tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-transparent text-gray-400 hover:text-tech-orange hover:bg-purple-900/20 whitespace-nowrap flex items-center gap-2 transition-all">
+          <i data-lucide="book-open" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> 藏經閣 (反思錄)
+        </button>
+        <button onclick="switchTab('tribulation')" id="tab-tribulation" class="tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-transparent text-gray-400 hover:text-tech-orange hover:bg-purple-900/20 whitespace-nowrap flex items-center gap-2 transition-all">
+          <i data-lucide="zap" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> 心魔劫 (防詐)
+        </button>
+        <button onclick="switchTab('artifacts')" id="tab-artifacts" class="tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-transparent text-gray-400 hover:text-tech-orange hover:bg-purple-900/20 whitespace-nowrap flex items-center gap-2 transition-all">
+          <i data-lucide="box" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> 萬寶樓 (法寶)
+        </button>
+      </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+      <!-- 模組一：九大飛升境界 -->
+      <section id="section-path" class="space-y-8 animate-fade-in-up">
+        <div class="bg-gradient-to-br from-[#130f24] via-[#0a0710] to-[#130f24] border border-purple-900/60 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_40px_rgba(59,7,100,0.5)] group">
+          <div class="absolute -right-8 -top-8 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none transform group-hover:rotate-12">
+            <i data-lucide="compass" class="w-64 h-64 text-tech-orange"></i>
+          </div>
+          <div class="absolute left-0 top-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 pointer-events-none"></div>
+          <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-purple-900/20 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div class="relative z-10 flex flex-col gap-6">
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-3">
+                <span class="text-[12px] px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/40 text-tech-orange font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(255,107,0,0.2)]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tech-orange animate-pulse"></span>
+                  逆天修行 ‧ 風控為盾
+                </span>
+                <span class="text-[12px] px-3 py-1 rounded-full bg-purple-900/40 border border-purple-700/50 text-purple-300 font-bold flex items-center gap-1.5">
+                  <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                  韭哥宗門專屬
+                </span>
+              </div>
+              <h2 class="xian-title text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 via-white to-gray-400 tracking-wide mt-2">
+                幣海修仙 ‧ <span class="text-tech-orange drop-shadow-[0_0_8px_rgba(255,107,0,0.5)]">九大境界</span>
+              </h2>
+              
+              <p class="text-sm text-gray-300 leading-relaxed max-w-3xl mt-1 border-l-2 border-purple-600/50 pl-4 bg-purple-900/10 py-2 rounded-r-lg">
+                仙路崎嶇，鏈上魔修與資金盤橫行。在此將<strong class="text-tech-yellow">「倉位管理 (單筆風險 1%-2%)」</strong>視為築基道骨，以<strong class="text-tech-orange">「防詐識局」</strong>作為破妄法眼。透過研讀韭哥前輩的反思筆記與風控考驗累積修為，一步步從凡人修至飛升大乘，達成零爆倉跨越牛熊的終極大道。
+              </p>
+            </div>
+
+            <div class="mt-4 pt-6 border-t border-purple-800/40 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-[#050308]/40 p-5 rounded-2xl border border-white/5 backdrop-blur-sm">
+              <div class="flex-1 w-full max-w-2xl space-y-2">
+                <div class="flex justify-between items-end text-xs mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-purple-900/50 border border-purple-700 flex items-center justify-center">
+                      <i data-lucide="activity" class="w-4 h-4 text-tech-orange"></i>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-500 font-bold tracking-wider text-[10px] uppercase">Cultivation Progress</span>
+                      <span class="text-gray-200 font-bold">距離飛升大乘還需累積修為</span>
+                    </div>
+                  </div>
+                  <div class="text-right flex flex-col">
+                    <span class="text-tech-yellow font-black text-lg" id="global-exp-text">0 <span class="text-sm text-gray-500 font-normal">/ 800</span></span>
+                  </div>
+                </div>
+                
+                <div class="w-full h-2.5 bg-gray-950 rounded-full overflow-hidden shadow-inner border border-gray-800/50 relative">
+                  <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9InRyYW5zcGFyZW50Ii8+PGxpbmUgeDE9IjAiIHkxPSI0IiB4Mj0iNCIgeTI9IjAiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz48L3N2Zz4=')] z-10 opacity-30 pointer-events-none"></div>
+                  <div id="global-exp-bar" class="h-full bg-gradient-to-r from-orange-700 via-orange-500 to-yellow-400 transition-all duration-1000 ease-out relative z-0" style="width: 0%">
+                    <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/40 blur-[2px] animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <button onclick="switchTab('shrine')" class="shrink-0 px-8 py-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-tech-orange hover:from-orange-500 hover:to-yellow-500 text-black font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,107,0,0.4)] hover:shadow-[0_0_30px_rgba(255,107,0,0.6)] transform hover:-translate-y-0.5 group">
+                入山測道骨 
+                <i data-lucide="chevrons-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-32 bg-tech-purple/10 blur-[100px] pointer-events-none rounded-full"></div>
+          <div id="realms-container" class="grid md:grid-cols-3 gap-6 relative z-10"></div>
+        </div>
+      </section>
+
+      <!-- 模組二：入山測道骨 -->
+      <section id="section-shrine" class="hidden space-y-8 animate-fade-in-up">
+        <div class="bg-gradient-to-br from-[#1a1128] via-[#0a0710] to-[#130f24] border border-purple-800/60 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_30px_rgba(59,7,100,0.4)] group">
+          <div class="absolute -right-10 -bottom-10 opacity-10 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
+            <i data-lucide="sparkles" class="w-72 h-72 text-tech-orange"></i>
+          </div>
+          <div class="absolute left-0 top-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 pointer-events-none"></div>
+
+          <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="space-y-4 flex-1">
+              <div class="flex items-center gap-3">
+                <span class="text-[12px] px-3 py-1 rounded-full bg-tech-orange/10 border border-tech-orange/40 text-tech-orange font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(255,107,0,0.2)]">
+                  <i data-lucide="scan-face" class="w-3.5 h-3.5"></i> 交易人格深度診斷
+                </span>
+                <span class="text-[12px] px-3 py-1 rounded-full bg-purple-900/40 border border-purple-700/50 text-purple-300 font-bold flex items-center gap-1.5">
+                  <i data-lucide="fingerprint" class="w-3.5 h-3.5"></i> 韭哥宗門考核
+                </span>
+              </div>
+              <h2 class="xian-title text-3xl md:text-4xl font-black text-tech-yellow tracking-wide mt-2">
+                入山測道骨 ‧ 尋找本命流派
+              </h2>
+              <p class="text-sm text-gray-300 leading-relaxed max-w-2xl border-l-2 border-orange-500/50 pl-4 bg-orange-500/5 py-2 rounded-r-lg">
+                仙海茫茫，請依本心直覺回答<strong class="text-tech-yellow">【宗門十問】</strong>，系統將精準測出最適合道友的修煉流派，並賜予專屬護身戒律。
+              </p>
+            </div>
+            
+            <div class="shrink-0 bg-[#050308]/60 border border-purple-800/50 rounded-2xl p-5 backdrop-blur-sm min-w-[220px] shadow-inner text-center">
+              <i data-lucide="brain-circuit" class="w-8 h-8 text-tech-orange mx-auto mb-2 opacity-80"></i>
+              <div class="text-xs text-gray-400 font-bold mb-1">大數據測靈陣</div>
+              <div class="text-tech-yellow text-sm font-black tracking-widest">共 10 道心境試煉</div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="quiz-box" class="max-w-3xl mx-auto bg-gradient-to-b from-[#130f24] to-[#0a0710] border border-purple-800/50 rounded-3xl p-6 md:p-10 shadow-[0_0_25px_rgba(59,7,100,0.5)] relative overflow-hidden transition-all duration-500 min-h-[400px]">
+          <!-- JS 渲染 -->
+        </div>
+      </section>   
+
+      <!-- 模組：六大流派殿堂 -->
+      <section id="section-sects" class="hidden space-y-8 animate-fade-in-up">
+        <div class="bg-gradient-to-br from-[#1a1128] to-tech-purple border border-tech-purple rounded-3xl p-8 relative overflow-hidden shadow-[0_0_30px_rgba(59,7,100,0.4)] group">
+          <div class="absolute -right-10 -bottom-10 opacity-10 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
+            <i data-lucide="swords" class="w-72 h-72 text-tech-orange"></i>
+          </div>
+          <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="space-y-4 flex-1">
+              <div class="flex items-center gap-3">
+                <span class="text-[12px] px-3 py-1 rounded-full bg-tech-orange/10 border border-tech-orange/40 text-tech-orange font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(255,107,0,0.2)]">
+                  <i data-lucide="swords" class="w-3.5 h-3.5"></i> 幣圈生態百態
+                </span>
+              </div>
+              <h2 class="xian-title text-3xl md:text-4xl font-black text-tech-yellow tracking-wide mt-2">
+                六大流派殿堂 ‧ 專屬修煉指南
+              </h2>
+              <p class="text-sm text-gray-300 leading-relaxed max-w-2xl border-l-2 border-orange-500/50 pl-4 bg-orange-500/5 py-2 rounded-r-lg">
+                鏈上世界，道法萬千。點擊各流派殿堂，查閱韭哥為道友們量身打造的專屬修煉指南與避坑指南。
+              </p>
+            </div>
+            <div class="shrink-0 bg-[#050308]/60 border border-purple-800/50 rounded-2xl p-5 backdrop-blur-sm shadow-inner text-center">
+                <button onclick="switchTab('shrine')" class="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-tech-orange hover:from-orange-500 hover:to-yellow-500 text-black font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,107,0,0.4)] hover:shadow-[0_0_30px_rgba(255,107,0,0.6)] transform hover:-translate-y-0.5 group">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    重新測靈根
+                </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="relative">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-48 bg-tech-purple/5 blur-[120px] pointer-events-none rounded-full"></div>
+          <div id="sects-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10"></div>
+        </div>
+      </section>
+
+      <!-- 模組三：藏經閣 -->
+      <section id="section-scripture" class="hidden space-y-8 animate-fade-in-up">
+        <div class="bg-gradient-to-br from-[#130f24] via-[#0a0710] to-[#130f24] border border-purple-800/60 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_35px_rgba(59,7,100,0.4)] group">
+          <div class="absolute -right-8 -bottom-10 opacity-5 group-hover:opacity-15 transition-all duration-700 pointer-events-none transform group-hover:rotate-6 group-hover:scale-110">
+            <i data-lucide="book-open" class="w-72 h-72 text-tech-orange"></i>
+          </div>
+          <div class="absolute left-0 top-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-40 pointer-events-none"></div>
+
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
+            <div class="space-y-4 flex-1">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="text-[12px] px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/40 text-tech-orange font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(255,107,0,0.2)]">
+                  <i data-lucide="scroll-text" class="w-3.5 h-3.5"></i> 幣勝防詐社區 ‧ 學習與反思錄
+                </span>
+              </div>
+              <h2 class="xian-title text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-400 tracking-wide mt-2 drop-shadow-sm">
+                萬卷藏經閣
+              </h2>
+              <p class="text-sm text-gray-300 leading-relaxed max-w-2xl border-l-2 border-orange-500/50 pl-4 bg-orange-500/5 py-2 rounded-r-lg">
+                每參悟一卷，即可獲贈 <span class="text-tech-yellow font-black px-1">+100 靈石</span> 與 <span class="text-tech-yellow font-black px-1">+100 修為</span>。
+              </p>
+              <div class="inline-flex items-start gap-2 p-3 mt-2 rounded-xl bg-red-950/30 border border-red-900/50 text-xs">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-red-500 shrink-0 mt-0.5"></i>
+                <span class="text-red-300 leading-relaxed">
+                  <strong class="text-red-400 font-bold">合規聲明：</strong> 本閣所有內容純屬個人交易反思，絕不涉及跟單、帶單，亦<strong class="text-tech-orange">不構成任何投資建議</strong>。
+                </span>
+              </div>
+            </div>
+            
+            <div class="shrink-0 bg-[#050308]/60 border border-purple-800/50 rounded-2xl p-5 backdrop-blur-sm min-w-[240px] shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] flex flex-col justify-center relative overflow-hidden group">
+              <div class="flex items-center gap-2 text-xs text-gray-400 mb-3 font-bold uppercase tracking-wider">
+                <i data-lucide="library" class="w-4 h-4 text-tech-orange"></i>
+                <span>參悟進度</span>
+              </div>
+              <div class="flex items-end gap-2 mb-3">
+                <span id="scripture-progress-count" class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">0</span>
+                <span id="scripture-progress-total" class="text-sm text-gray-500 font-bold mb-1.5">/ 6 卷</span>
+              </div>
+              <div class="w-full h-2 bg-gray-950 rounded-full overflow-hidden shadow-inner border border-gray-800/50 relative">
+                <div id="scripture-progress-bar" class="h-full bg-gradient-to-r from-orange-600 to-tech-yellow transition-all duration-700 ease-out relative z-0" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x" id="scripture-filters">
+          <button onclick="filterArticles('all')" id="filter-all" class="snap-start shrink-0 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-tech-orange text-black font-black text-xs">全部卷軸</button>
+          <button onclick="filterArticles('security')" id="filter-security" class="snap-start shrink-0 px-5 py-2.5 rounded-xl bg-purple-900/30 text-gray-300 font-bold text-xs"><i data-lucide="shield-check" class="w-4 h-4 text-emerald-500 inline"></i> 金剛防禦 (防詐)</button>
+          <button onclick="filterArticles('risk')" id="filter-risk" class="snap-start shrink-0 px-5 py-2.5 rounded-xl bg-purple-900/30 text-gray-300 font-bold text-xs"><i data-lucide="crosshair" class="w-4 h-4 text-red-500 inline"></i> 核心風控 (倉位)</button>
+          <button onclick="filterArticles('trend')" id="filter-trend" class="snap-start shrink-0 px-5 py-2.5 rounded-xl bg-purple-900/30 text-gray-300 font-bold text-xs"><i data-lucide="trending-up" class="w-4 h-4 text-blue-400 inline"></i> 觀天察勢 (趨勢)</button>
+        </div>
+        
+        <div class="relative">
+          <div id="articles-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10"></div>
+        </div>
+      </section>
+
+      <!-- 模組四：心魔劫 -->
+      <section id="section-tribulation" class="hidden space-y-8 animate-fade-in-up">
+        <div class="bg-gradient-to-br from-[#1a0b0b] via-[#050303] to-[#1a0505] border border-red-900/60 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_40px_rgba(220,38,38,0.3)] group">
+          <div class="absolute -right-8 -bottom-10 opacity-5 pointer-events-none"><i data-lucide="skull" class="w-72 h-72 text-red-500"></i></div>
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+            <div class="space-y-4 flex-1">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="text-[12px] px-3 py-1 rounded-full bg-red-500/10 border border-red-500/40 text-red-400 font-bold flex items-center gap-1.5 animate-pulse"><i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> 極度危險 ‧ 九死一生</span>
+              </div>
+              <h2 class="xian-title text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-orange-500 to-yellow-500 mt-2">心魔試煉場</h2>
+              <p class="text-sm text-gray-300 border-l-2 border-red-500/50 pl-4 bg-red-500/5 py-2 rounded-r-lg">識破魔修伎倆。<strong class="text-tech-orange">答對可破除心魔獲取修為；答錯將遭【九霄玄雷】轟擊！</strong></p>
+            </div>
+          </div>
+        </div>
+        <div id="tribulation-container" class="relative z-10 max-w-3xl mx-auto bg-gradient-to-b from-[#130f24] to-[#0a0710] border border-orange-500/40 rounded-3xl p-6 md:p-10 shadow-[0_0_25px_rgba(255,107,0,0.3)] min-h-[300px]"></div>
+      </section>
+
+      <!-- 模組五：萬寶樓 -->
+      <section id="section-artifacts" class="hidden space-y-8 animate-fade-in-up">
+        <div class="bg-gradient-to-br from-[#130f24] via-[#0a0710] to-[#130f24] border border-purple-800/60 rounded-3xl p-8 relative overflow-hidden group">
+          <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="space-y-4 flex-1">
+              <h2 class="xian-title text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-400 mt-2">萬寶樓 ‧ 宗門護道法寶</h2>
+              <p class="text-sm text-gray-300 border-l-2 border-orange-500/50 pl-4 bg-orange-500/5 py-2 rounded-r-lg">拒絕釣魚！本閣收錄之法寶皆為<strong class="text-tech-yellow">官方正版連結</strong>。</p>
+            </div>
+          </div>
+        </div>
+        <div id="artifacts-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10"></div>
+      </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="border-t border-purple-950/80 bg-[#030303] py-6 px-4 text-center text-xs text-gray-500 space-y-1 mt-auto">
+      <p class="text-gray-400 font-bold tracking-wider">幣勝防詐社區 ‧ 韭哥出擊 ‧ 守護靈脈</p>
+      <p class="text-[11px] text-gray-600">免責聲明：本站所有內容僅為學習點分享，不構成任何投資建議。</p>
+    </footer>
+  </div>
+
+  <!-- 彈窗 Modal -->
+  <div id="modal-backdrop" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#120f1d] border border-orange-500/50 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 relative glow-orange">
+      <button onclick="closeArticleModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800/60 rounded-lg p-1.5 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+      <div id="modal-body" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <script>
+    // ================= Firebase 初始化與雲端設定 =================
+const firebaseConfig = {
+      apiKey: "AIzaSyARrcOziqiKW0ikKdfs2AXqO7isNA6hrMs",
+      authDomain: "bitwinner-c1ac3.firebaseapp.com",
+      projectId: "bitwinner-c1ac3",
+      storageBucket: "bitwinner-c1ac3.firebasestorage.app",
+      messagingSenderId: "25992688656",
+      appId: "1:25992688656:web:292142cb81e0b6014b8695",
+      measurementId: "G-EKYNYBRQCC"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // ================= 全局狀態 (改由雲端同步) =================
+    let currentUser = null;
+    let state = {
+      name: "韭哥道友",         
+      exp: 0,                   
+      stones: 0,                
+      aptitude: null,           
+      readIds: [],              
+      passedQuizzes: [],
+      inviter_uid: null // 綁定導師推薦碼
+    };
+
+    // 擷取網址參數 (如 ?ref=michael888)
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviterCode = urlParams.get('ref') || null;
+
+    // ================= 靜態資料庫 =================
+    const SITE_CONFIG = {
+      okxLink: "https://www.okx.com/",
+      tradingviewLink: "https://tw.tradingview.com/",
+      arkhamLink: "https://platform.arkhamintelligence.com/",
+      revokeLink: "https://revoke.cash/",
+      coingeckoLink: "https://www.coingecko.com/",
+      communityLink: "https://www.youtube.com/@Michael-c4m"
+    };
+
+    const realmsData = [
+      { name: "練氣", reqExp: 0, role: "凡人入道", core: "完成合規坊市開戶，引金入體，掌握法幣出入金安全。", danger: "貪便宜場外 OTC 買黑 U 導致凍卡。", tasks: ["註冊 OKX 交易所並完成 KYC", "綁定雙重驗證", "完成第一筆 C2C 買幣"] },
+      { name: "築基", reqExp: 100, role: "鏈上奠基", core: "準備斷網舊手機冷儲存助記詞，定期 Revoke 授權。", danger: "連網截圖助記詞遭魔修奪舍。", tasks: ["舊手機恢復出廠設定", "斷網創建錢包並手抄助記詞", "使用 Revoke.cash 清理授權"] },
+      { name: "結丹", reqExp: 200, role: "順應天道", core: "設定圖表【陽線綠】，透過 8/21/55/200 EMA 確立大勢。", danger: "逆著 200 EMA 天道摸頂。", tasks: ["設定 TradingView", "陽線綠陰線紅", "設定四條 EMA 均線"] },
+      { name: "元嬰", reqExp: 300, role: "合約初探", core: "嚴守【倉位管理】：單筆風險 1-2%、逐倉、100%止損。", danger: "撤銷止損全倉扛單。", tasks: ["設定逐倉模式", "單筆停損 1%~2%", "100% 掛止損單"] },
+      { name: "化神", reqExp: 400, role: "破妄法眼", core: "使用 Arkham 追蹤聰明錢（SMC），識破高息資金盤。", danger: "誤信保本高息盤。", tasks: ["註冊 Arkham", "追蹤金流", "學習識別 FVG"] },
+      { name: "煉虛", reqExp: 500, role: "陰陽對沖", core: "捨棄單邊賭博，採用【雙向套利】對沖策略。", danger: "單邊極端擊破。", tasks: ["雙向同時開倉", "配置網格參數", "設定保證金安全閥"] },
+      { name: "合體", reqExp: 600, role: "量化合一", core: "API 隔離輔助結合，以麻雀戰法複利累積。", danger: "誤授權提幣權限。", tasks: ["創建唯讀與交易 API Key", "確認未開啟提幣權限", "綁定 IP 白名單"] },
+      { name: "大乘", reqExp: 700, role: "傳道解惑", core: "將實戰轉為「反思與學習點」，於社區助人避坑。", danger: "違規帶單喊單。", tasks: ["分享風控經驗", "協助新手辨識釣魚", "提煉學習點"] },
+      { name: "渡劫", reqExp: 800, role: "跨越黑天鵝", core: "歷經極端流動性枯竭測試，零爆倉跨越牛熊。", danger: "道心膨脹。", tasks: ["利潤提領為冷錢包定存", "壓力測試", "堅守紀律"] }
+    ];
+
+    const aptitudeQs = [
+      { q: "第一問【渡劫】：當比特幣在深夜突然遭遇暴跌插針時，道友的第一反應為何？", opts: [{ t: "立刻開啟高倍合約全倉抄底", type: "evil" }, { t: "毫不慌張，依靠雙向套利對沖自動賺取波動價差", type: "formation" }, { t: "嚴格執行單筆風險逐倉止損，等待 SMC 訂單塊", type: "sword" }, { t: "冷錢包儲存，無視短期波動", type: "pill" }, { t: "啟動 MEV 機器人搶跑套利", type: "artifact" }, { t: "趁 Gas 費低去交互測試網", type: "talisman" }] },
+      { q: "第二問【識局】：坊間傳聞某個新興的「AI 量化」宣稱將 USDT 轉入其合約可月賺 30%，如何抉擇？", opts: [{ t: "火速貸款全倉打入準備跑路", type: "evil" }, { t: "只用「API 隔離」將資金留存於交易所", type: "formation" }, { t: "不參與保本高息，只相信裸 K", type: "sword" }, { t: "定投主流資產並清理授權", type: "pill" }, { t: "尋找合約漏洞開發套利腳本", type: "artifact" }, { t: "只尋找零成本空投", type: "talisman" }] },
+      { q: "第三問【斷尾】：當合約交易即將觸發停損，你會怎麼做？", opts: [{ t: "撤銷止損全倉攤平", type: "evil" }, { t: "不需要手動，依賴雙向對沖弭平浮虧", type: "formation" }, { t: "讓止損觸發，接受 1%~2% 本金耗損", type: "sword" }, { t: "我不玩合約", type: "pill" }, { t: "確認風控腳本自動撤單運作正常", type: "artifact" }, { t: "關閉軟體去肝空投", type: "talisman" }] }
+    ];
+
+    const sectsData = {
+      evil: { title: "【天譴邪修 ‧ 賭徒梭哈流】", icon: "skull", color: "red", desc: "無視風控，喜好高倍槓桿全倉操作，常遊走爆倉邊緣。", rule: "回頭是岸！即刻研讀「倉位管理」。", focus: "從現貨定投重新學起。" },
+      formation: { title: "【韭哥陣修 ‧ 雙向量化流】", icon: "shield-alert", color: "orange", desc: "不賭單邊，擅長雙向套利與 API 隔離穩健求勝。", rule: "資金永遠留在自己的 OKX 帳戶！", focus: "優化網格與資金費率對沖。" },
+      sword: { title: "【獵鷹劍修 ‧ 趨勢結構流】", icon: "swords", color: "blue", desc: "透過 EMA 判斷大勢，善用 SMC 捕捉關鍵突破。", rule: "單筆風險限 1%~2%，切忌撤銷止損扛單！", focus: "精進裸 K 判讀與流動性獵取。" },
+      pill: { title: "【金剛丹修 ‧ 週期防護流】", icon: "box", color: "yellow", desc: "重視資產絕對安全，守護家族財富與社區防詐。", rule: "斷網舊手機儲存助記詞，定期清理授權！", focus: "研究宏觀經濟與四年減半週期。" },
+      artifact: { title: "【天工器修 ‧ MEV 開發流】", icon: "cpu", color: "purple", desc: "精通代碼，打造自動化腳本靠技術信息差獲利。", rule: "防範反向攻擊，預留安全邊際！", focus: "深入 Solidity 與閃電貸邏輯。" },
+      talisman: { title: "【千機符修 ‧ 羊毛空投流】", icon: "layers", color: "emerald", desc: "善用多帳號矩陣，靠時間交互獲取協議早期紅利。", rule: "注意防護女巫檢測與假網址釣魚！", focus: "挖掘未發幣公鏈與隔離指紋瀏覽器。" }
+    };
+
+    const articlesData = [
+      { id: "art-1", category: "security", tag: "金剛防禦", icon: "shield", title: "《本命元神：斷網舊手機冷錢包學習點》", summary: "反思如何將舊手機徹底斷網打造成最安全的離線簽名機。", points: ["助記詞不可截圖或存在雲端。", "斷網舊手機物理隔離安全性極高。"] },
+      { id: "art-2", category: "security", tag: "金剛防禦", icon: "search", title: "《破妄法眼：用 Arkham 識破高息盤》", summary: "學習如何利用鏈上工具追蹤項目方金流。", points: ["合約入金後轉入混幣器必是資金盤。", "合規輔助軟體絕不要求轉出本金。"] },
+      { id: "art-3", category: "risk", tag: "核心風控", icon: "crosshair", title: "《不死金身：1%~2% 倉位管理反思》", summary: "探討為何嚴守極限防護與逐倉操作。", points: ["單筆虧損嚴格限制在總資金 1%~2%。", "永遠逐倉，槓桿 20 倍以下，不撤止損。"] },
+      { id: "art-4", category: "risk", tag: "核心風控", icon: "scale", title: "《陰陽雙向：套利對沖與 API 隔離》", summary: "反思多空同時做單平抑極端波動。", points: ["雙向套利不猜方向捕捉波動率。", "輔助軟體僅需 API 隔離，絕不開放提幣。"] },
+      { id: "art-5", category: "trend", tag: "觀天察勢", icon: "trending-up", title: "《順天應人：陽線綠與 200 EMA》", summary: "透過 EMA 判斷天道大勢。", points: ["K 線設為陽線綠陰線紅。", "均線之上絕不逆勢做空。"] },
+      { id: "art-6", category: "trend", tag: "觀天察勢", icon: "eye", title: "《獵鷹視角：SMC 聰明錢流動性》", summary: "避開假突破誘多陷阱。", points: ["不在明顯流動性池盲目掛突破單。", "尋找 FVG 作為高勝率介入點。"] }
+    ];
+
+    const tribulationData = [
+      { q: "【奪舍劫】管理員私訊要求提供「12 字助記詞」解除帳戶鎖定，如何處置？", options: [{ text: "封鎖檢舉，助記詞絕不交出！", correct: true, feedback: "✨ 渡劫成功！修為 +100。" }, { text: "趕緊提供截圖。", correct: false, feedback: "⚡ 天雷反噬！傾家蕩產。" }] },
+      { q: "【貪婪劫】KOL 推薦保證月賺 30% DApp，要求轉 USDT 入智能合約？", options: [{ text: "先投 100 U 試水溫。", correct: false, feedback: "⚡ 灰飛煙滅！標準資金盤。" }, { text: "拒絕轉出本金，只用 API 隔離。", correct: true, feedback: "✨ 破妄法眼大成！修為 +100。" }] },
+      { q: "【執念劫】合約即將觸發停損，心魔低語撤銷止損加倉攤平？", options: [{ text: "果斷停損，嚴守 1%-2% 倉位管理。", correct: true, feedback: "✨ 風控護體！修為 +100。" }, { text: "撤銷止損全倉攤平！", correct: false, feedback: "⚡ 天雷劈碎元嬰！爆倉歸零。" }] }
+    ];
+
+    const artifactsData = [
+      { id: "artf-1", badge: "主力坊市", name: "OKX 歐易交易所", desc: "支援 API 隔離對沖，免除挪用本金風險。", note: "合約切記 20 倍以下", linkKey: "okxLink", btnText: "前往正版", color: "orange", icon: "arrow-right-left" },
+      { id: "artf-2", badge: "測靈觀天", name: "TradingView", desc: "配置 EMA 觀測大勢，設定陽線綠。", note: "量價推演必備", linkKey: "tradingviewLink", btnText: "啟動法寶", color: "purple", icon: "bar-chart-2" },
+      { id: "artf-3", badge: "照妖鏡", name: "Arkham 鏈上天眼", desc: "透視資金流向，專破高息貔貅盤。", note: "防詐調查神器", linkKey: "arkhamLink", btnText: "開啟天眼", color: "blue", icon: "eye" },
+      { id: "artf-4", badge: "護身符", name: "Revoke.cash", desc: "定期檢查並撤銷可疑智能合約授權。", note: "每月必做功課", linkKey: "revokeLink", btnText: "清理授權", color: "emerald", icon: "shield-alert" }
+    ];
+
+    const colorConfig = {
+        "orange": { bg: "bg-orange-500/10", border: "border-orange-500/30", text: "text-orange-400", hover: "hover:border-orange-500/60", btn: "bg-orange-500 hover:bg-orange-400 text-black", glow: "text-orange-500" },
+        "purple": { bg: "bg-purple-500/10", border: "border-purple-500/30", text: "text-purple-400", hover: "hover:border-purple-500/60", btn: "bg-purple-600 hover:bg-purple-500 text-white", glow: "text-purple-400" },
+        "blue": { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-400", hover: "hover:border-blue-500/60", btn: "bg-blue-600 hover:bg-blue-500 text-white", glow: "text-blue-400" },
+        "emerald": { bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-400", hover: "hover:border-emerald-500/60", btn: "bg-emerald-600 hover:bg-emerald-500 text-white", glow: "text-emerald-400" },
+        "yellow": { bg: "bg-yellow-500/10", border: "border-yellow-500/30", text: "text-yellow-400", hover: "hover:border-yellow-500/60", btn: "bg-yellow-500 hover:bg-yellow-400 text-black", glow: "text-yellow-400" },
+        "red": { bg: "bg-red-500/10", border: "border-red-500/30", text: "text-red-400", hover: "hover:border-red-500/60", btn: "bg-red-600 hover:bg-red-500 text-white", glow: "text-red-500" }
+    };
+
+    let qIdx = 0;
+    let qScores = { evil: 0, formation: 0, sword: 0, pill: 0, artifact: 0, talisman: 0 };
+    let currentFilter = 'all';
+
+    // ================= 雲端身分驗證與資料同步 =================
+    auth.onAuthStateChanged(async (user) => {
+      const loginOverlay = document.getElementById("login-overlay");
+      const mainApp = document.getElementById("main-app");
+      
+      if (user) {
+        currentUser = user;
+        loginOverlay.style.opacity = "0";
+        setTimeout(() => {
+          loginOverlay.classList.add("hidden");
+          mainApp.classList.remove("hidden");
+        }, 500);
+        await loadCloudState(user);
+      } else {
+        currentUser = null;
+        mainApp.classList.add("hidden");
+        loginOverlay.classList.remove("hidden");
+        loginOverlay.style.opacity = "1";
+      }
+    });
+
+    document.getElementById("login-btn").addEventListener("click", () => {
+      auth.signInWithPopup(provider).catch(err => alert("登入失敗：" + err.message));
+    });
+
+    function logout() {
+      auth.signOut();
+    }
+
+    async function loadCloudState(user) {
+       try {
+         const docRef = db.collection("users").doc(user.uid);
+         const docSnap = await docRef.get();
+         if (docSnap.exists) {
+           state = { ...state, ...docSnap.data() };
+         } else {
+           // 新註冊學員
+           state.name = user.displayName || "韭哥道友";
+           state.inviter_uid = inviterCode; // 寫入推薦人綁定
+           state.email = user.email;
+           state.created_at = firebase.firestore.FieldValue.serverTimestamp();
+           await docRef.set(state);
+         }
+         
+         updateHUD();
+         renderRealms(); 
+         renderQuiz();
+         renderSects(); 
+         filterArticles('all'); 
+         renderTribulation();
+         renderArtifacts();
+       } catch (err) {
+         console.error("讀取雲端資料失敗", err);
+       }
+    }
+
+    async function saveState() {
+       updateHUD(); // 立即更新 UI
+       if (!currentUser) return;
+       try {
+         await db.collection("users").doc(currentUser.uid).set(state, { merge: true });
+       } catch (err) {
+         console.error("儲存雲端資料失敗", err);
+       }
+    }
+
+    // ================= 核心渲染邏輯 =================
+    function getCurrentRealm() {
+      let current = realmsData[0];
+      let currentIdx = 0;
+      for (let i = 0; i < realmsData.length; i++) {
+        if (state.exp >= realmsData[i].reqExp) { current = realmsData[i]; currentIdx = i; }
+      }
+      const nextIdx = currentIdx + 1;
+      const isMax = nextIdx >= realmsData.length;
+      const next = isMax ? { reqExp: current.reqExp + 100 } : realmsData[nextIdx];
+      return { current, next, isMax, currentIdx };
+    }
+
+    function updateHUD() {
+      const { current, next, isMax, currentIdx } = getCurrentRealm();
+      document.getElementById("hud-name").innerText = state.name;
+      document.getElementById("hud-realm").innerText = current.name;
+      
+      const stonesEl = document.getElementById("hud-stones");
+      if (parseInt(stonesEl.innerText) !== state.stones) {
+        stonesEl.classList.add("text-yellow-300", "scale-110");
+        setTimeout(() => stonesEl.classList.remove("text-yellow-300", "scale-110"), 300);
+      }
+      stonesEl.innerText = state.stones;
+      
+      let pct = isMax ? 100 : Math.min(100, Math.max(0, Math.round(((state.exp - current.reqExp) / (next.reqExp - current.reqExp)) * 100)));
+      const expBar = document.getElementById("hud-exp-bar");
+      if (expBar) expBar.style.width = `${pct}%`;
+      const expText = document.getElementById("hud-exp-text");
+      if (expText) expText.innerText = isMax ? '渡劫圓滿' : `${state.exp}/${next.reqExp}`;
+    }
+
+    function changeDaoName() {
+      const n = prompt("天道無常，請道友賜下尊號：", state.name);
+      if (n && n.trim()) { state.name = n.trim(); saveState(); }
+    }
+
+    function switchTab(tab) {
+      const tabs = ["path", "shrine", "sects", "scripture", "tribulation", "artifacts"];
+      tabs.forEach(id => {
+        const section = document.getElementById(`section-${id}`);
+        if (section) section.classList.add("hidden");
+        const btn = document.getElementById(`tab-${id}`);
+        if (btn) btn.className = "tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-transparent text-gray-400 hover:text-tech-orange hover:bg-purple-900/20 whitespace-nowrap flex items-center gap-2 transition-all";
+      });
+      const targetSection = document.getElementById(`section-${tab}`);
+      if (targetSection) {
+        targetSection.classList.remove("hidden");
+        void targetSection.offsetWidth; 
+        targetSection.classList.add("animate-fade-in-up");
+        if(tab === 'sects') renderSects();
+      }
+      const targetBtn = document.getElementById(`tab-${tab}`);
+      if (targetBtn) targetBtn.className = "tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-orange-500 bg-orange-500/10 text-tech-orange font-bold whitespace-nowrap flex items-center gap-2 transition-all";
+      lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderSects() {
+        const container = document.getElementById("sects-container");
+        if (!container) return;
+        container.innerHTML = Object.keys(sectsData).map(key => {
+            const sect = sectsData[key];
+            const style = colorConfig[sect.color];
+            const isUserSect = state.aptitude === key;
+            const extraClass = isUserSect ? `border-${sect.color}-500 shadow-[0_0_20px_rgba(var(--tw-colors-${sect.color}-500),0.3)] transform -translate-y-2` : 'border-purple-800/50';
+            return `<div class="bg-tech-purple border ${extraClass} rounded-2xl p-6 flex flex-col space-y-4 relative overflow-hidden group">
+                ${isUserSect ? '<div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg z-20">本命流派</div>' : ''}
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="w-10 h-10 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center"><i data-lucide="${sect.icon}" class="w-5 h-5 ${style.glow}"></i></div>
+                    <h3 class="text-lg font-black ${style.glow}">${sect.title}</h3>
+                </div>
+                <p class="text-xs text-gray-300 relative z-10">${sect.desc}</p>
+            </div>`;
+        }).join("");
+        lucide.createIcons();
+    }
+
+    function openRealmModal(idx) {
+      const r = realmsData[idx];
+      document.getElementById("modal-body").innerHTML = `
+        <h3 class="xian-title text-xl font-black text-white mb-2">${r.role} ‧ ${r.name}</h3>
+        <p class="text-xs text-gray-400 mb-6 border-l-2 border-tech-orange pl-3">${r.core}</p>
+        <div class="space-y-3 mb-6">
+          <h4 class="text-sm font-bold text-tech-yellow mb-3">應完成之學習點</h4>
+          ${r.tasks.map(task => `<div class="p-3 bg-[#141021] border border-purple-800/40 rounded-xl text-sm text-gray-200">・ ${task}</div>`).join("")}
+        </div>
+        <button onclick="closeArticleModal()" class="w-full px-6 py-2.5 rounded-xl bg-tech-orange text-black font-bold text-xs">我已明瞭，關閉指南</button>`;
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+    }
+
+    function renderRealms() {
+      const container = document.getElementById("realms-container");
+      if (!container) return;
+      const maxExp = realmsData[realmsData.length - 1].reqExp || 800;
+      const pct = Math.min(100, Math.round((state.exp / maxExp) * 100));
+      
+      const globalExpText = document.getElementById("global-exp-text");
+      const globalExpBar = document.getElementById("global-exp-bar");
+      if (globalExpText) globalExpText.innerText = `${state.exp} / ${maxExp}`;
+      if (globalExpBar) globalExpBar.style.width = `${pct}%`;
+
+      container.innerHTML = realmsData.map((r, idx) => {
+        const isUnlocked = state.exp >= r.reqExp;
+        const isCurrent = state.exp >= r.reqExp && (idx === realmsData.length - 1 || state.exp < realmsData[idx + 1].reqExp);
+        let borderClass = isCurrent ? 'border-tech-orange shadow-[0_0_25px_rgba(255,107,0,0.25)]' : (isUnlocked ? 'border-emerald-700/60' : 'border-purple-900/30 opacity-60');
+        let badgeBg = isCurrent ? 'bg-tech-orange text-black' : (isUnlocked ? 'bg-emerald-950 text-emerald-400' : 'bg-purple-950 text-gray-500');
+        
+        return `<div class="bg-[#0f0b18]/80 border ${borderClass} rounded-2xl p-6 flex flex-col space-y-4">
+            <div class="flex items-center justify-between"><span class="text-[11px] px-3 py-1 rounded-full ${badgeBg} font-bold">第 ${idx + 1} 階 ‧ ${r.name}</span><span class="text-[11px] text-gray-500">修為要求: ${r.reqExp}</span></div>
+            <h3 class="text-lg font-black ${isUnlocked ? 'text-white' : 'text-gray-500'}">${r.role}</h3>
+            <p class="text-xs ${isUnlocked ? 'text-gray-300' : 'text-gray-600'} flex-1">${r.core}</p>
+            <button ${isUnlocked ? `onclick="openRealmModal(${idx})"` : ''} class="w-full py-2.5 rounded-xl text-xs font-bold ${isUnlocked ? 'bg-tech-orange text-black' : 'bg-purple-900/40 text-gray-500'}">${isUnlocked ? '查看指南' : '未解鎖'}</button>
+          </div>`;
+      }).join("");
+    }
+
+    function renderQuiz() {
+      const box = document.getElementById("quiz-box");
+      if (state.aptitude) {
+        const info = sectsData[state.aptitude] || sectsData['formation'];
+        const style = colorConfig[info.color];
+        box.innerHTML = `
+          <div class="text-center space-y-5">
+            <h3 class="xian-title text-2xl font-black ${style.glow}">${info.title}</h3>
+            <p class="text-sm text-gray-300">${info.desc}</p>
+            <div class="p-4 rounded-xl border border-purple-800/60 text-xs text-left"><span class="font-bold">護身戒律：${info.rule}</span></div>
+            <button onclick="resetQuiz()" class="px-5 py-2.5 rounded-xl bg-gray-800 text-gray-300 font-bold text-xs">重新測驗</button>
+          </div>`;
+        return;
+      }
+      const cur = aptitudeQs[qIdx];
+      const pct = Math.round((qIdx / aptitudeQs.length) * 100);
+      box.innerHTML = `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between text-xs font-bold"><span class="text-tech-orange">第 ${qIdx + 1} / ${aptitudeQs.length} 問</span><span>${pct}%</span></div>
+          <h3 class="text-base font-bold text-white">${cur.q}</h3>
+          <div class="space-y-3">${cur.opts.map((o, i) => `<button onclick="answerQuiz('${o.type}')" class="w-full text-left p-4 rounded-xl bg-[#19142a] hover:bg-orange-500/10 border border-purple-800/60 text-sm text-gray-200 transition">${o.t}</button>`).join("")}</div>
+        </div>`;
+    }
+    
+    function answerQuiz(type) {
+      qScores[type]++; qIdx++;
+      if (qIdx >= aptitudeQs.length) {
+        let best = Object.keys(qScores).reduce((a, b) => qScores[a] > qScores[b] ? a : b);
+        if (qScores[best] === 0) best = "formation"; 
+        state.aptitude = best; state.stones += 100; state.exp += 100;
+        saveState(); renderRealms();
+      }
+      renderQuiz();
+    }
+    
+    function resetQuiz() { state.aptitude = null; qIdx = 0; qScores = { evil: 0, formation: 0, sword: 0, pill: 0, artifact: 0, talisman: 0 }; saveState(); renderQuiz(); }
+
+    function filterArticles(category) { currentFilter = category; renderArticles(); }
+    
+    function renderArticles() {
+      const container = document.getElementById("articles-container");
+      const readCount = state.readIds.length;
+      document.getElementById("scripture-progress-count").innerText = readCount;
+      document.getElementById("scripture-progress-bar").style.width = `${Math.round((readCount / articlesData.length) * 100)}%`;
+
+      const filtered = currentFilter === 'all' ? articlesData : articlesData.filter(a => a.category === currentFilter);
+      container.innerHTML = filtered.map(a => {
+        const isRead = state.readIds.includes(a.id);
+        const borderClass = isRead ? 'border-emerald-600/50' : 'border-purple-800/50';
+        return `
+          <div class="bg-tech-purple border ${borderClass} rounded-2xl p-5 space-y-4 flex flex-col">
+            <div class="flex items-center justify-between"><span class="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-950 text-tech-orange border border-purple-800/50">${a.tag}</span><span class="text-[11px] font-bold ${isRead ? 'text-emerald-400' : 'text-tech-yellow'}">${isRead ? '✓ 已參悟' : '+100 修為'}</span></div>
+            <h3 class="text-base font-bold text-white">${a.title}</h3>
+            <p class="text-xs text-gray-400 flex-1">${a.summary}</p>
+            <button onclick="openArticleModal('${a.id}')" class="w-full py-2.5 rounded-xl ${isRead ? 'bg-emerald-950/40 text-emerald-400' : 'bg-purple-900/40 text-tech-yellow'} font-bold text-xs">${isRead ? '溫習學習點' : '展開卷軸參悟'}</button>
+          </div>`;
+      }).join("");
+    }
+    
+    function openArticleModal(id) {
+      const a = articlesData.find(x => x.id === id);
+      const isRead = state.readIds.includes(id);
+      document.getElementById("modal-body").innerHTML = `
+        <h3 class="xian-title text-xl font-black text-white mb-3">${a.title}</h3>
+        <p class="text-sm text-gray-300 mb-5">${a.summary}</p>
+        <div class="space-y-3 mb-6">
+          <h4 class="text-sm font-bold text-tech-yellow mb-2">核心反思</h4>
+          ${a.points.map(p => `<div class="p-4 bg-[#141021] border border-purple-800/40 rounded-xl text-sm text-gray-200">${p}</div>`).join("")}
+        </div>
+        <div class="flex justify-end gap-3">
+          ${isRead ? `<button onclick="closeArticleModal()" class="px-6 py-2.5 rounded-xl bg-gray-800 text-white font-bold text-xs">關閉卷軸</button>` : `<button onclick="completeArticle('${a.id}')" class="px-6 py-2.5 rounded-xl bg-tech-orange text-black font-bold text-xs">完成反思 (+100 修為)</button>`}
+        </div>`;
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+    }
+    function closeArticleModal() { document.getElementById("modal-backdrop").classList.add("hidden"); }
+    function completeArticle(id) { if (!state.readIds.includes(id)) { state.readIds.push(id); state.stones += 100; state.exp += 100; saveState(); renderArticles(); renderRealms(); } closeArticleModal(); }
+
+    function renderTribulation() {
+      document.getElementById("tribulation-container").innerHTML = `<div class="space-y-6">` + tribulationData.map((item, idx) => {
+        const done = state.passedQuizzes.includes(idx);
+        return `
+          <div id="trib-card-${idx}" class="p-4 bg-[#181326] border ${done ? 'border-emerald-500/50' : 'border-purple-800/50'} rounded-xl space-y-3">
+            <span class="text-xs font-bold ${done ? 'text-emerald-400' : 'text-tech-yellow'}">${done ? '✓ 已渡劫' : '待渡劫'}</span>
+            <p class="text-xs font-bold text-white">${item.q}</p>
+            <div class="space-y-2">${item.options.map((opt, oIdx) => `<button onclick="checkTrib(${idx}, ${oIdx})" class="w-full text-left p-3 rounded-lg bg-[#0e0b16] border border-purple-900/60 text-xs text-gray-200">${opt.text}</button>`).join("")}</div>
+            <div id="trib-msg-${idx}" class="hidden p-3 rounded-lg text-xs font-bold mt-2"></div>
+          </div>`;
+      }).join("") + `</div>`;
+    }
+    
+    function checkTrib(qIdx, oIdx) {
+      const opt = tribulationData[qIdx].options[oIdx];
+      const msg = document.getElementById(`trib-msg-${qIdx}`);
+      msg.classList.remove("hidden");
+      if (opt.correct) {
+        msg.className = "p-3 rounded-lg text-xs font-bold bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 mt-2";
+        msg.innerText = opt.feedback;
+        if (!state.passedQuizzes.includes(qIdx)) { state.passedQuizzes.push(qIdx); state.stones += 50; state.exp += 100; saveState(); renderRealms(); renderTribulation(); }
+      } else {
+        msg.className = "p-3 rounded-lg text-xs font-bold bg-red-950/80 border border-red-500/50 text-red-300 mt-2";
+        msg.innerText = opt.feedback;
+      }
+    }
+
+    function renderArtifacts() {
+      document.getElementById("artifacts-container").innerHTML = (artifactsData).map(item => {
+        const style = colorConfig[item.color];
+        return `
+          <div class="bg-tech-purple border border-purple-800/50 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+            <h3 class="text-base font-bold text-white">${item.name}</h3>
+            <p class="text-xs text-gray-400 min-h-[40px]">${item.desc}</p>
+            <a href="${SITE_CONFIG[item.linkKey]}" target="_blank" class="w-full text-center py-2.5 rounded-xl ${style.btn} font-bold text-xs">${item.btnText}</a>
+          </div>`;
+      }).join("");
+    }
+
+    function initParticles() {
+      const canvas = document.getElementById("chi-canvas");
+      const ctx = canvas.getContext("2d");
+      let w = canvas.width = window.innerWidth; let h = canvas.height = window.innerHeight;
+      window.addEventListener("resize", () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; });
+      const particles = Array.from({ length: 40 }, () => ({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 2 + 0.8, vy: -(Math.random() * 0.5 + 0.2), color: Math.random() > 0.5 ? "rgba(255, 107, 0, 0.4)" : "rgba(147, 51, 234, 0.4)" }));
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        particles.forEach(p => { p.y += p.vy; if (p.y < 0) { p.y = h; p.x = Math.random() * w; } ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill(); });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initParticles(); 
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

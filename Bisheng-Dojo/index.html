@@ -8,12 +8,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   
-  <!-- 引入 Firebase Compat 函式庫 (適合單檔使用) -->
+  <!-- 引入 Firebase Compat 函式庫 -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   
-
   <style>
     body {
       background-color: #050505; 
@@ -420,7 +419,7 @@
 
   <script>
     // ================= Firebase 初始化與雲端設定 =================
-const firebaseConfig = {
+    const firebaseConfig = {
       apiKey: "AIzaSyARrcOziqiKW0ikKdfs2AXqO7isNA6hrMs",
       authDomain: "bitwinner-c1ac3.firebaseapp.com",
       projectId: "bitwinner-c1ac3",
@@ -430,7 +429,9 @@ const firebaseConfig = {
       measurementId: "G-EKYNYBRQCC"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
     const db = firebase.firestore();
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -439,15 +440,14 @@ const firebaseConfig = {
     let currentUser = null;
     let state = {
       name: "韭哥道友",         
-      exp: 0,                   
-      stones: 0,                
-      aptitude: null,           
-      readIds: [],              
+      exp: 0,                    
+      stones: 0,                 
+      aptitude: null,            
+      readIds: [],               
       passedQuizzes: [],
-      inviter_uid: null // 綁定導師推薦碼
+      inviter_uid: null 
     };
 
-    // 擷取網址參數 (如 ?ref=michael888)
     const urlParams = new URLSearchParams(window.location.search);
     const inviterCode = urlParams.get('ref') || null;
 
@@ -559,9 +559,8 @@ const firebaseConfig = {
          if (docSnap.exists) {
            state = { ...state, ...docSnap.data() };
          } else {
-           // 新註冊學員
            state.name = user.displayName || "韭哥道友";
-           state.inviter_uid = inviterCode; // 寫入推薦人綁定
+           state.inviter_uid = inviterCode; 
            state.email = user.email;
            state.created_at = firebase.firestore.FieldValue.serverTimestamp();
            await docRef.set(state);
@@ -574,13 +573,14 @@ const firebaseConfig = {
          filterArticles('all'); 
          renderTribulation();
          renderArtifacts();
+         lucide.createIcons();
        } catch (err) {
          console.error("讀取雲端資料失敗", err);
        }
     }
 
     async function saveState() {
-       updateHUD(); // 立即更新 UI
+       updateHUD(); 
        if (!currentUser) return;
        try {
          await db.collection("users").doc(currentUser.uid).set(state, { merge: true });
@@ -603,15 +603,11 @@ const firebaseConfig = {
     }
 
     function updateHUD() {
-      const { current, next, isMax, currentIdx } = getCurrentRealm();
+      const { current, next, isMax } = getCurrentRealm();
       document.getElementById("hud-name").innerText = state.name;
       document.getElementById("hud-realm").innerText = current.name;
       
       const stonesEl = document.getElementById("hud-stones");
-      if (parseInt(stonesEl.innerText) !== state.stones) {
-        stonesEl.classList.add("text-yellow-300", "scale-110");
-        setTimeout(() => stonesEl.classList.remove("text-yellow-300", "scale-110"), 300);
-      }
       stonesEl.innerText = state.stones;
       
       let pct = isMax ? 100 : Math.min(100, Math.max(0, Math.round(((state.exp - current.reqExp) / (next.reqExp - current.reqExp)) * 100)));
@@ -640,6 +636,7 @@ const firebaseConfig = {
         void targetSection.offsetWidth; 
         targetSection.classList.add("animate-fade-in-up");
         if(tab === 'sects') renderSects();
+        if(tab === 'tribulation') renderTribulation();
       }
       const targetBtn = document.getElementById(`tab-${tab}`);
       if (targetBtn) targetBtn.className = "tab-btn group px-5 py-3 rounded-t-xl border-b-2 border-orange-500 bg-orange-500/10 text-tech-orange font-bold whitespace-nowrap flex items-center gap-2 transition-all";
@@ -654,7 +651,7 @@ const firebaseConfig = {
             const sect = sectsData[key];
             const style = colorConfig[sect.color];
             const isUserSect = state.aptitude === key;
-            const extraClass = isUserSect ? `border-${sect.color}-500 shadow-[0_0_20px_rgba(var(--tw-colors-${sect.color}-500),0.3)] transform -translate-y-2` : 'border-purple-800/50';
+            const extraClass = isUserSect ? `border-${sect.color}-500 shadow-[0_0_20px_rgba(255,107,0,0.3)] transform -translate-y-2` : 'border-purple-800/50';
             return `<div class="bg-tech-purple border ${extraClass} rounded-2xl p-6 flex flex-col space-y-4 relative overflow-hidden group">
                 ${isUserSect ? '<div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg z-20">本命流派</div>' : ''}
                 <div class="flex items-center gap-3 relative z-10">
@@ -704,10 +701,12 @@ const firebaseConfig = {
             <button ${isUnlocked ? `onclick="openRealmModal(${idx})"` : ''} class="w-full py-2.5 rounded-xl text-xs font-bold ${isUnlocked ? 'bg-tech-orange text-black' : 'bg-purple-900/40 text-gray-500'}">${isUnlocked ? '查看指南' : '未解鎖'}</button>
           </div>`;
       }).join("");
+      lucide.createIcons();
     }
 
     function renderQuiz() {
       const box = document.getElementById("quiz-box");
+      if (!box) return;
       if (state.aptitude) {
         const info = sectsData[state.aptitude] || sectsData['formation'];
         const style = colorConfig[info.color];
@@ -718,6 +717,7 @@ const firebaseConfig = {
             <div class="p-4 rounded-xl border border-purple-800/60 text-xs text-left"><span class="font-bold">護身戒律：${info.rule}</span></div>
             <button onclick="resetQuiz()" class="px-5 py-2.5 rounded-xl bg-gray-800 text-gray-300 font-bold text-xs">重新測驗</button>
           </div>`;
+        lucide.createIcons();
         return;
       }
       const cur = aptitudeQs[qIdx];
@@ -726,8 +726,9 @@ const firebaseConfig = {
         <div class="space-y-6">
           <div class="flex items-center justify-between text-xs font-bold"><span class="text-tech-orange">第 ${qIdx + 1} / ${aptitudeQs.length} 問</span><span>${pct}%</span></div>
           <h3 class="text-base font-bold text-white">${cur.q}</h3>
-          <div class="space-y-3">${cur.opts.map((o, i) => `<button onclick="answerQuiz('${o.type}')" class="w-full text-left p-4 rounded-xl bg-[#19142a] hover:bg-orange-500/10 border border-purple-800/60 text-sm text-gray-200 transition">${o.t}</button>`).join("")}</div>
+          <div class="space-y-3">${cur.opts.map((o) => `<button onclick="answerQuiz('${o.type}')" class="w-full text-left p-4 rounded-xl bg-[#19142a] hover:bg-orange-500/10 border border-purple-800/60 text-sm text-gray-200 transition">${o.t}</button>`).join("")}</div>
         </div>`;
+      lucide.createIcons();
     }
     
     function answerQuiz(type) {
@@ -747,6 +748,7 @@ const firebaseConfig = {
     
     function renderArticles() {
       const container = document.getElementById("articles-container");
+      if (!container) return;
       const readCount = state.readIds.length;
       document.getElementById("scripture-progress-count").innerText = readCount;
       document.getElementById("scripture-progress-bar").style.width = `${Math.round((readCount / articlesData.length) * 100)}%`;
@@ -763,6 +765,7 @@ const firebaseConfig = {
             <button onclick="openArticleModal('${a.id}')" class="w-full py-2.5 rounded-xl ${isRead ? 'bg-emerald-950/40 text-emerald-400' : 'bg-purple-900/40 text-tech-yellow'} font-bold text-xs">${isRead ? '溫習學習點' : '展開卷軸參悟'}</button>
           </div>`;
       }).join("");
+      lucide.createIcons();
     }
     
     function openArticleModal(id) {
@@ -784,7 +787,9 @@ const firebaseConfig = {
     function completeArticle(id) { if (!state.readIds.includes(id)) { state.readIds.push(id); state.stones += 100; state.exp += 100; saveState(); renderArticles(); renderRealms(); } closeArticleModal(); }
 
     function renderTribulation() {
-      document.getElementById("tribulation-container").innerHTML = `<div class="space-y-6">` + tribulationData.map((item, idx) => {
+      const container = document.getElementById("tribulation-container");
+      if (!container) return;
+      container.innerHTML = `<div class="space-y-6">` + tribulationData.map((item, idx) => {
         const done = state.passedQuizzes.includes(idx);
         return `
           <div id="trib-card-${idx}" class="p-4 bg-[#181326] border ${done ? 'border-emerald-500/50' : 'border-purple-800/50'} rounded-xl space-y-3">
@@ -794,6 +799,7 @@ const firebaseConfig = {
             <div id="trib-msg-${idx}" class="hidden p-3 rounded-lg text-xs font-bold mt-2"></div>
           </div>`;
       }).join("") + `</div>`;
+      lucide.createIcons();
     }
     
     function checkTrib(qIdx, oIdx) {
@@ -811,7 +817,9 @@ const firebaseConfig = {
     }
 
     function renderArtifacts() {
-      document.getElementById("artifacts-container").innerHTML = (artifactsData).map(item => {
+      const container = document.getElementById("artifacts-container");
+      if (!container) return;
+      container.innerHTML = (artifactsData).map(item => {
         const style = colorConfig[item.color];
         return `
           <div class="bg-tech-purple border border-purple-800/50 rounded-2xl p-5 flex flex-col justify-between space-y-4">
@@ -820,10 +828,12 @@ const firebaseConfig = {
             <a href="${SITE_CONFIG[item.linkKey]}" target="_blank" class="w-full text-center py-2.5 rounded-xl ${style.btn} font-bold text-xs">${item.btnText}</a>
           </div>`;
       }).join("");
+      lucide.createIcons();
     }
 
     function initParticles() {
       const canvas = document.getElementById("chi-canvas");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       let w = canvas.width = window.innerWidth; let h = canvas.height = window.innerHeight;
       window.addEventListener("resize", () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; });

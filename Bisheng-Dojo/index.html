@@ -218,7 +218,7 @@
                 </div>
                 
                 <div class="w-full h-2.5 bg-gray-950 rounded-full overflow-hidden shadow-inner border border-gray-800/50 relative">
-                  <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9InRyYW5zcGFyZW50Ii8+PGxpbmUgeDE9IjAiIHkxPSI0IiB4Mj0iNCIgeTI9IjAiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz48L3N2Zz4=')] z-10 opacity-30 pointer-events-none"></div>
+                  <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9InRyYW5zcGFyZW50Ii8+PGxpbmUgeDE9IjAiIHkxPSI0IiB4Mj0iNCIgeTI9IjAiIHN0cm9rZT0icmdiYSgysetIntcyU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz48L3N2Zz4=')] z-10 opacity-30 pointer-events-none"></div>
                   <div id="global-exp-bar" class="h-full bg-gradient-to-r from-orange-700 via-orange-500 to-yellow-400 transition-all duration-1000 ease-out relative z-0" style="width: 0%">
                     <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/40 blur-[2px] animate-pulse"></div>
                   </div>
@@ -479,7 +479,7 @@
       { q: "第三問【斷尾】：當合約交易即將觸發停損，你會怎麼做？", opts: [{ t: "撤銷止損全倉攤平", type: "evil" }, { t: "不需要手動，依賴雙向對沖弭平浮虧", type: "formation" }, { t: "讓止損觸發，接受 1%~2% 本金耗損", type: "sword" }, { t: "我不玩合約", type: "pill" }, { t: "確認風控腳本自動撤單運作正常", type: "artifact" }, { t: "關閉軟體去肝空投", type: "talisman" }] }
     ];
 
-    // 六大流派詳細資料庫 (包含完整說明、核心特徵與避坑指南)
+    // 六大流派詳細資料庫
     const sectsData = {
       evil: {
         title: "【天譴邪修 ‧ 賭徒梭哈流】", icon: "skull", color: "red",
@@ -545,7 +545,7 @@
 
     const articlesData = [
       { id: "art-1", category: "security", tag: "金剛防禦", icon: "shield", title: "《本命元神：斷網舊手機冷錢包學習點》", summary: "反思如何將舊手機徹底斷網打造成最安全的離線簽名機。", points: ["助記詞不可截圖或存在雲端。", "斷網舊手機物理隔離安全性極高。"] },
-      { id: "art-2", category: "security", tag: "金剛防禦", icon: "search", title: "《破妄法眼：用 Arkham 識破高息盤》", summary: "學習如何利用鏈上工具追蹤項目方金流。", points: ["合約入金後轉入混幣器必是資金盤。", "合規輔助軟體絕不要求轉出本金。"] },
+      { id: "art-2", category: "security", tag: "金剛防禦", icon: "search", title: "《破妄法眼：用 Arkham 識破高息盤》", summary: "學習如何利用鏈上工具追蹤項目方金流。", points: ["合規輔助軟體絕不要求轉出本金。", "合約入金後轉入混幣器必是資金盤。"] },
       { id: "art-3", category: "risk", tag: "核心風控", icon: "crosshair", title: "《不死金身：1%~2% 倉位管理反思》", summary: "探討為何嚴守極限防護與逐倉操作。", points: ["單筆虧損嚴格限制在總資金 1%~2%。", "永遠逐倉，槓桿 20 倍以下，不撤止損。"] },
       { id: "art-4", category: "risk", tag: "核心風控", icon: "scale", title: "《陰陽雙向：套利對沖與 API 隔離》", summary: "反思多空同時做單平抑極端波動。", points: ["雙向套利不猜方向捕捉波動率。", "輔助軟體僅需 API 隔離，絕不開放提幣。"] },
       { id: "art-5", category: "trend", tag: "觀天察勢", icon: "trending-up", title: "《順天應人：陽線綠與 200 EMA》", summary: "透過 EMA 判斷天道大勢。", points: ["K 線設為陽線綠陰線紅。", "均線之上絕不逆勢做空。"] },
@@ -553,7 +553,7 @@
     ];
 
     const tribulationData = [
-      { q: "【奪舍劫】管理員私訊要求提供 "12 字助記詞" 解除帳戶鎖定，如何處置？", options: [{ text: "封鎖檢舉，助記詞絕不交出！", correct: true, feedback: "✨ 渡劫成功！修為 +100。" }, { text: "趕緊提供截圖。", correct: false, feedback: "⚡ 天雷反噬！傾家蕩產。" }] },
+      { q: "【奪舍劫】管理員私訊要求提供「12字助記詞」解除帳戶鎖定，如何處置？", options: [{ text: "封鎖檢舉，助記詞絕不交出！", correct: true, feedback: "✨ 渡劫成功！修為 +100。" }, { text: "趕緊提供截圖。", correct: false, feedback: "⚡ 天雷反噬！傾家蕩產。" }] },
       { q: "【貪婪劫】KOL 推薦保證月賺 30% DApp，要求轉 USDT 入智能合約？", options: [{ text: "先投 100 U 試水溫。", correct: false, feedback: "⚡ 灰飛煙滅！標準資金盤。" }, { text: "拒絕轉出本金，只用 API 隔離。", correct: true, feedback: "✨ 破妄法眼大成！修為 +100。" }] },
       { q: "【執念劫】合約即將觸發停損，心魔低語撤銷止損加倉攤平？", options: [{ text: "果斷停損，嚴守 1%-2% 倉位管理。", correct: true, feedback: "✨ 風控護體！修為 +100。" }, { text: "撤銷止損全倉攤平！", correct: false, feedback: "⚡ 天雷劈碎元嬰！爆倉歸零。" }] }
     ];

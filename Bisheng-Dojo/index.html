@@ -278,7 +278,7 @@
         </div>
       </section>   
 
-      <!-- 模組：六大流派殿堂 -->
+      <!-- 模組三：六大流派殿堂 -->
       <section id="section-sects" class="hidden space-y-8 animate-fade-in-up">
         <div class="bg-gradient-to-br from-[#1a1128] to-tech-purple border border-tech-purple rounded-3xl p-8 relative overflow-hidden shadow-[0_0_30px_rgba(59,7,100,0.4)] group">
           <div class="absolute -right-10 -bottom-10 opacity-10 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
@@ -295,7 +295,7 @@
                 六大流派殿堂 ‧ 專屬修煉指南
               </h2>
               <p class="text-sm text-gray-300 leading-relaxed max-w-2xl border-l-2 border-orange-500/50 pl-4 bg-orange-500/5 py-2 rounded-r-lg">
-                鏈上世界，道法萬千。點擊各流派殿堂，查閱韭哥為道友們量身打造的專屬修煉指南與避坑指南。
+                鏈上世界，道法萬千。點擊各流派殿堂卡片，查閱韭哥為道友們量身打造的詳細修煉心法、核心特徵與避坑指南。
               </p>
             </div>
             <div class="shrink-0 bg-[#050308]/60 border border-purple-800/50 rounded-2xl p-5 backdrop-blur-sm shadow-inner text-center">
@@ -313,7 +313,7 @@
         </div>
       </section>
 
-      <!-- 模組三：藏經閣 -->
+      <!-- 模組四：藏經閣 -->
       <section id="section-scripture" class="hidden space-y-8 animate-fade-in-up">
         <div class="bg-gradient-to-br from-[#130f24] via-[#0a0710] to-[#130f24] border border-purple-800/60 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_35px_rgba(59,7,100,0.4)] group">
           <div class="absolute -right-8 -bottom-10 opacity-5 group-hover:opacity-15 transition-all duration-700 pointer-events-none transform group-hover:rotate-6 group-hover:scale-110">
@@ -370,7 +370,7 @@
         </div>
       </section>
 
-      <!-- 模組四：心魔劫 -->
+      <!-- 模組五：心魔劫 -->
       <section id="section-tribulation" class="hidden space-y-8 animate-fade-in-up">
         <div class="bg-gradient-to-br from-[#1a0b0b] via-[#050303] to-[#1a0505] border border-red-900/60 rounded-3xl p-8 relative overflow-hidden shadow-[0_0_40px_rgba(220,38,38,0.3)] group">
           <div class="absolute -right-8 -bottom-10 opacity-5 pointer-events-none"><i data-lucide="skull" class="w-72 h-72 text-red-500"></i></div>
@@ -387,7 +387,7 @@
         <div id="tribulation-container" class="relative z-10 max-w-3xl mx-auto bg-gradient-to-b from-[#130f24] to-[#0a0710] border border-orange-500/40 rounded-3xl p-6 md:p-10 shadow-[0_0_25px_rgba(255,107,0,0.3)] min-h-[300px]"></div>
       </section>
 
-      <!-- 模組五：萬寶樓 -->
+      <!-- 模組六：萬寶樓 -->
       <section id="section-artifacts" class="hidden space-y-8 animate-fade-in-up">
         <div class="bg-gradient-to-br from-[#130f24] via-[#0a0710] to-[#130f24] border border-purple-800/60 rounded-3xl p-8 relative overflow-hidden group">
           <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-8">
@@ -409,7 +409,7 @@
     </footer>
   </div>
 
-  <!-- 彈窗 Modal -->
+  <!-- 通用彈窗 Modal -->
   <div id="modal-backdrop" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-[#120f1d] border border-orange-500/50 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 relative glow-orange">
       <button onclick="closeArticleModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800/60 rounded-lg p-1.5 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -439,8 +439,8 @@
     // ================= 全局狀態 (改由雲端同步) =================
     let currentUser = null;
     let state = {
-      name: "韭哥道友",         
-      exp: 0,                    
+      name: "韭哥道友",       
+      exp: 0,                   
       stones: 0,                 
       aptitude: null,            
       readIds: [],               
@@ -479,13 +479,68 @@
       { q: "第三問【斷尾】：當合約交易即將觸發停損，你會怎麼做？", opts: [{ t: "撤銷止損全倉攤平", type: "evil" }, { t: "不需要手動，依賴雙向對沖弭平浮虧", type: "formation" }, { t: "讓止損觸發，接受 1%~2% 本金耗損", type: "sword" }, { t: "我不玩合約", type: "pill" }, { t: "確認風控腳本自動撤單運作正常", type: "artifact" }, { t: "關閉軟體去肝空投", type: "talisman" }] }
     ];
 
+    // 六大流派詳細資料庫 (包含完整說明、核心特徵與避坑指南)
     const sectsData = {
-      evil: { title: "【天譴邪修 ‧ 賭徒梭哈流】", icon: "skull", color: "red", desc: "無視風控，喜好高倍槓桿全倉操作，常遊走爆倉邊緣。", rule: "回頭是岸！即刻研讀「倉位管理」。", focus: "從現貨定投重新學起。" },
-      formation: { title: "【韭哥陣修 ‧ 雙向量化流】", icon: "shield-alert", color: "orange", desc: "不賭單邊，擅長雙向套利與 API 隔離穩健求勝。", rule: "資金永遠留在自己的 OKX 帳戶！", focus: "優化網格與資金費率對沖。" },
-      sword: { title: "【獵鷹劍修 ‧ 趨勢結構流】", icon: "swords", color: "blue", desc: "透過 EMA 判斷大勢，善用 SMC 捕捉關鍵突破。", rule: "單筆風險限 1%~2%，切忌撤銷止損扛單！", focus: "精進裸 K 判讀與流動性獵取。" },
-      pill: { title: "【金剛丹修 ‧ 週期防護流】", icon: "box", color: "yellow", desc: "重視資產絕對安全，守護家族財富與社區防詐。", rule: "斷網舊手機儲存助記詞，定期清理授權！", focus: "研究宏觀經濟與四年減半週期。" },
-      artifact: { title: "【天工器修 ‧ MEV 開發流】", icon: "cpu", color: "purple", desc: "精通代碼，打造自動化腳本靠技術信息差獲利。", rule: "防範反向攻擊，預留安全邊際！", focus: "深入 Solidity 與閃電貸邏輯。" },
-      talisman: { title: "【千機符修 ‧ 羊毛空投流】", icon: "layers", color: "emerald", desc: "善用多帳號矩陣，靠時間交互獲取協議早期紅利。", rule: "注意防護女巫檢測與假網址釣魚！", focus: "挖掘未發幣公鏈與隔離指紋瀏覽器。" }
+      evil: {
+        title: "【天譴邪修 ‧ 賭徒梭哈流】", icon: "skull", color: "red",
+        desc: "無視風控，喜好高倍槓桿全倉操作，常遊走爆倉邊緣。",
+        rule: "回頭是岸！即刻研讀「倉位管理」。", focus: "從現貨定投重新學起。",
+        sections: [
+          { subtitle: "一、 流派定位與心態本質", content: "「天譴邪修」並非正統修煉之道，而是幣圈中最常見、也最危險的賭徒梭哈流。此派修士往往被貪婪與急功近利的魔心吞噬，追求一夜暴富的快感。他們眼中只有高倍槓桿與全倉梭哈，無視市場波動的規律，將交易場視為毫無邏輯的賭場。" },
+          { subtitle: "二、 核心特徵與運作模式", content: "1. 極端高槓桿：動輒開啟 50x、100x 甚至更高的槓桿，將微小的波動放大數十倍。<br>2. 全倉模式與盲目加倉：不設停損，習慣在虧損時盲目補保證金、扛單，直至保證金歸零。<br>3. 無風控意識：將資金管理拋諸腦後，把命運交給運氣與莊家的插針方向。" },
+          { subtitle: "三、 致命危機與避坑指南", content: "- 避坑要點：此流派名為「天譴」，意即違背金融規律者必遭天譴。歷史數據證明，九成以上的爆倉、負債與精神崩潰皆源於此道。<br>- 破局解法：嚴格奉行倉位管理原則，切忌將身家性命押注於單一方向。務必將合約槓桿嚴格控制在 20 倍以下，並永遠為每一筆交易設定合理的停損點，將風險掌控在可承受範圍之內。" }
+        ]
+      },
+      formation: {
+        title: "【韭哥陣修 ‧ 雙向量化流】", icon: "shield-alert", color: "orange",
+        desc: "不賭單邊，擅長雙向套利與 API 隔離穩健求勝。",
+        rule: "資金永遠留在自己的 OKX 帳戶！", focus: "優化網格與資金費率對沖。",
+        sections: [
+          { subtitle: "一、 流派定位與心態本質", content: "「韭哥陣修」乃是本社區推崇的正道核心——雙向量化流。此派不與趨勢賭氣，不盲目猜測多空方向，而是透過嚴密的陣法與工具，在波動的市場中穩紮穩打。核心思維在於「不賭單邊、利用雙向套利、API 隔離與健康求勝」。" },
+          { subtitle: "二、 核心特徵與運作模式", content: "1. 雙向對沖與套利：運用量化策略，在多空雙向同時佈局，不依賴單邊行情，吃足資金費率與波段價差。<br>2. API 隔離輔助：資金安全存放於各大主流交易所（如 OKX 等）的個人帳戶中，透過 API 授權進行自動化或半自動化輔助，不交出資產控制權，杜絕中心化平台跑路風險。<br>3. 紀律化風控：以嚴格的倉位管理（取代傳統僵化的公式）為基石，確保帳戶資產在任何極端行情下皆能安然無恙。" },
+          { subtitle: "三、 實戰修煉與避坑指南", content: "- 修煉心法：將交易視為一場精密的科學實驗，而非情緒化的博弈。學會利用量化工具分攤風險，以時間換取空間。<br>- 避坑要點：防範市面上打著「保證收益、穩賺不賠」旗號的假量化、真傳銷盤；務必確保自己的 API 權限設定正確（僅開啟交易與讀取，關閉提現權限），並做好 IP 白名單防護。" }
+        ]
+      },
+      sword: {
+        title: "【獵鷹劍修 ‧ 趨勢結構流】", icon: "swords", color: "blue",
+        desc: "透過 EMA 判斷大勢，善用 SMC 捕捉關鍵突破。",
+        rule: "單筆風險限 1%~2%，切忌撤銷止損扛單！", focus: "精進裸 K 判讀與流動性獵取。",
+        sections: [
+          { subtitle: "一、 流派定位與心態本質", content: "「獵鷹劍修」代表的是技術分析與盤面解讀的頂尖造詣——趨勢結構流。此派修士如同一隻高空盤旋的獵鷹，冷靜、敏銳，專門捕捉市場中的關鍵結構與趨勢轉折。" },
+          { subtitle: "二、 核心特徵與運作模式", content: "1. 多維技術指標交織：熟練運用 EMA 移動平均線系統（如 8 / 21 / 55 / 200 EMA）判斷市場大勢，結合 MACD 與 RSI 掌握動能強弱。<br>2. Smart Money Concepts (SMC) 與價格行為：深入研究訂單塊 (OB)、公允價值缺口 (FVG)、流動性掃蕩 (SFP)、結構破壞 (BOS) 與角色互換 (CHoCH) 等高階技術。<br>3. 精準獵殺突破口：耐心等待價格走到關鍵支撐壓力位或流動性密集區，方才出鞘，追求極高的盈虧比。" },
+          { subtitle: "三、 實戰修煉與避坑指南", content: "- 修煉心法：培養「不見兔子不撒鷹」的耐心。技術分析不是預測未來，而是規劃當下在不同機率下的應對策略。<br>- 避坑要點：切忌頻繁交易（過度交易）。在缺乏明確趨勢的震盪盤中，劍修應當收斂鋒芒、靜觀其變，避免在雜訊中頻繁磨損本金。" }
+        ]
+      },
+      pill: {
+        title: "【金剛丹修 ‧ 週期防護流】", icon: "box", color: "yellow",
+        desc: "重視資產絕對安全，守護家族財富與社區防詐。",
+        rule: "斷網舊手機儲存助記詞，定期清理授權！", focus: "研究宏觀經濟與四年減半週期。",
+        sections: [
+          { subtitle: "一、 流派定位與心態本質", content: "「金剛丹修」主打防守與內功修煉，核心為週期防護流。此派將「資產安全」與「社區防詐」視為修行的最高指導原則，不求一鳴驚人，但求金剛不壞、長久存活於幣圈。" },
+          { subtitle: "二、 核心特徵與運作模式", content: "1. 絕對資產安全：重視錢包安全管理（冷熱錢包分離、多簽錢包設置、助記詞實體物理備份）、防範釣魚網站與授權陷阱。<br>2. 週期思維與現金為王：順應加密貨幣的四年牛熊週期，在牛市頂峰懂得逐步止盈、落袋為安；在熊市底部累積優質資產。<br>3. 社區防詐與反思學習：積極參與反詐社區建設，深入剖析各類鏈上騙局、盤圈套路與假DApp智能合約漏洞，守護自己與周遭親友的財產安全。" },
+          { subtitle: "三、 實戰修煉與避坑指南", content: "- 修煉心法：在幣圈「活得久比賺得快更重要」。每一次的防詐調查與學習點，都是鞏固金剛之軀的養分。<br>- 避坑要點：時刻保持懷疑精神，對於陌生空投、未知合約授權、高收益理財群組保持最高警戒；切勿貪圖小利而連接不明網址。" }
+        ]
+      },
+      artifact: {
+        title: "【天工器修 ‧ MEV開發流】", icon: "cpu", color: "purple",
+        desc: "精通代碼，打造自動化腳本靠技術信息差獲利。",
+        rule: "防範反向攻擊，預留安全邊際！", focus: "深入 Solidity 與閃電貸邏輯。",
+        sections: [
+          { subtitle: "一、 流派定位與心態本質", content: "「天工器修」是鏈上技術流與工程師的殿堂，專注於MEV（礦工/驗證者可提取價值）開發流。此派修士精通代碼與底層邏輯，透過自動化腳本、智慧合約與鏈上數據分析，捕捉市場中的技術性資訊差與套利空間。" },
+          { subtitle: "二、 核心特徵與運作模式", content: "1. 精通代碼與底層架構：深入研究 EVM 虛擬機、節點運作機制、mempool（內存池）交易監控。<br>2. 自動化機器人部署：開發三明治攻擊防禦、清算機器人、DEX 聚合套利或鏈上資訊差自動化腳本。<br>3. 技術資訊差獲利：利用速度與演算法優勢，在區塊打包的瞬間搶佔先機。" },
+          { subtitle: "三、 實戰修煉與避坑指南", content: "- 修煉心法：工欲善其事，必先利其器。器修的強大來自於對技術的深刻理解與嚴謹的代碼測試。<br>- 避坑要點：鏈上開發充滿陷阱，合約漏洞可能導致資金瞬間歸零。務必經過嚴格的安全性審計（Audit）與沙盒測試，防範遭黑客利用或夾擊（MEV Sandwich）反噬。" }
+        ]
+      },
+      talisman: {
+        title: "【千機符修 ‧ 羊毛空投流】", icon: "layers", color: "emerald",
+        desc: "善用多帳號矩陣，靠時間交互獲取協議早期紅利。",
+        rule: "注意防護女巫檢測與假網址釣魚！", focus: "挖掘未發幣公鏈與隔離指紋瀏覽器。",
+        sections: [
+          { subtitle: "一、 流派定位與心態本質", content: "「千機符修」代表的是以小搏大、精準佈局的羊毛空投流。此派修士善用多帳號矩陣與時間成本的錯配，穿梭於各大公鏈、L2 協議與早期專案之間，透過深度互動來獲取專案方發放的早期治理代幣紅利。" },
+          { subtitle: "二、 核心特徵與運作模式", content: "1. 多帳號矩陣管理：建立安全隔離的瀏覽器環境與獨立錢包，規避女巫攻擊（Sybil Attack）檢測。<br>2. 生態互動與時間成本投入：精準追蹤具備潛力的主網、測試網、跨鏈橋、借貸與質押協議，按規律進行真實互動。<br>3. 早期紅利收割：以極低的成本參與項目冷啟動期，等待代幣發放時迎來豐厚回報。" },
+          { subtitle: "三、 實戰修煉與避坑指南", content: "- 修煉心法：付出勞力與時間，用紀律與規條對抗繁瑣的重複操作。<br>- 避坑要點：慎防假冒知名項目的釣魚空投網站；在進行多帳號操作時，務必注意防範 IP 關聯與資金劃轉汙染，以免辛辛苦苦互動數月最終遭到項目方「一刀切」反女巫清退。" }
+        ]
+      }
     };
 
     const articlesData = [
@@ -498,7 +553,7 @@
     ];
 
     const tribulationData = [
-      { q: "【奪舍劫】管理員私訊要求提供「12 字助記詞」解除帳戶鎖定，如何處置？", options: [{ text: "封鎖檢舉，助記詞絕不交出！", correct: true, feedback: "✨ 渡劫成功！修為 +100。" }, { text: "趕緊提供截圖。", correct: false, feedback: "⚡ 天雷反噬！傾家蕩產。" }] },
+      { q: "【奪舍劫】管理員私訊要求提供 "12 字助記詞" 解除帳戶鎖定，如何處置？", options: [{ text: "封鎖檢舉，助記詞絕不交出！", correct: true, feedback: "✨ 渡劫成功！修為 +100。" }, { text: "趕緊提供截圖。", correct: false, feedback: "⚡ 天雷反噬！傾家蕩產。" }] },
       { q: "【貪婪劫】KOL 推薦保證月賺 30% DApp，要求轉 USDT 入智能合約？", options: [{ text: "先投 100 U 試水溫。", correct: false, feedback: "⚡ 灰飛煙滅！標準資金盤。" }, { text: "拒絕轉出本金，只用 API 隔離。", correct: true, feedback: "✨ 破妄法眼大成！修為 +100。" }] },
       { q: "【執念劫】合約即將觸發停損，心魔低語撤銷止損加倉攤平？", options: [{ text: "果斷停損，嚴守 1%-2% 倉位管理。", correct: true, feedback: "✨ 風控護體！修為 +100。" }, { text: "撤銷止損全倉攤平！", correct: false, feedback: "⚡ 天雷劈碎元嬰！爆倉歸零。" }] }
     ];
@@ -644,6 +699,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // 渲染六大流派卡片（點擊可開啟完整說明彈窗）
     function renderSects() {
         const container = document.getElementById("sects-container");
         if (!container) return;
@@ -651,17 +707,35 @@
             const sect = sectsData[key];
             const style = colorConfig[sect.color];
             const isUserSect = state.aptitude === key;
-            const extraClass = isUserSect ? `border-${sect.color}-500 shadow-[0_0_20px_rgba(255,107,0,0.3)] transform -translate-y-2` : 'border-purple-800/50';
-            return `<div class="bg-tech-purple border ${extraClass} rounded-2xl p-6 flex flex-col space-y-4 relative overflow-hidden group">
-                ${isUserSect ? '<div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg z-20">本命流派</div>' : ''}
+            const extraClass = isUserSect ? `border-${sect.color}-500 shadow-[0_0_20px_rgba(255,107,0,0.3)] transform -translate-y-2` : 'border-purple-800/50 hover:border-orange-500/60';
+            return `<div onclick="openSectModal('${key}')" class="bg-tech-purple border ${extraClass} rounded-2xl p-6 flex flex-col justify-between space-y-4 cursor-pointer transition group relative overflow-hidden">
+                ${isUserSect ? '<div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg z-25">本命流派</div>' : ''}
                 <div class="flex items-center gap-3 relative z-10">
                     <div class="w-10 h-10 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center"><i data-lucide="${sect.icon}" class="w-5 h-5 ${style.glow}"></i></div>
-                    <h3 class="text-lg font-black ${style.glow}">${sect.title}</h3>
+                    <h3 class="text-lg font-black ${style.glow} group-hover:text-tech-orange transition">${sect.title}</h3>
                 </div>
                 <p class="text-xs text-gray-300 relative z-10">${sect.desc}</p>
+                <div class="text-[11px] text-tech-orange font-bold flex items-center gap-1 mt-2">點擊查閱修煉指南與避坑要點 →</div>
             </div>`;
         }).join("");
         lucide.createIcons();
+    }
+
+    // 開啟六大流派詳細說明 Modal
+    function openSectModal(key) {
+      const sect = sectsData[key];
+      document.getElementById("modal-body").innerHTML = `
+        <h3 class="xian-title text-2xl font-black text-tech-yellow mb-4">${sect.title}</h3>
+        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          ${sect.sections.map(sec => `
+            <div class="p-4 bg-[#181326] border border-purple-800/40 rounded-xl space-y-2">
+              <h4 class="text-sm font-bold text-tech-orange">${sec.subtitle}</h4>
+              <p class="text-xs text-gray-300 leading-relaxed">${sec.content}</p>
+            </div>
+          `).join("")}
+        </div>
+        <button onclick="closeArticleModal()" class="w-full mt-6 py-2.5 rounded-xl bg-tech-orange text-black font-bold text-xs">關閉指南</button>`;
+      document.getElementById("modal-backdrop").classList.remove("hidden");
     }
 
     function openRealmModal(idx) {
